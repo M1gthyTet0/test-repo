@@ -27,7 +27,7 @@ export function CatalogView({ products }: CatalogViewProps) {
       </header>
 
       <div className={styles.toolbar}>
-        <p className={styles.count}>
+        <p className={styles.count} aria-live="polite">
           {products.length === 1
             ? '1 pieza en el taller'
             : `${products.length} piezas en el taller`}

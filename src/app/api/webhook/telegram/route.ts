@@ -86,6 +86,14 @@ async function sendTelegramReply(
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const secretToken = process.env.TELEGRAM_SECRET_TOKEN?.trim();
+  if (secretToken) {
+    const headerToken = request.headers.get('x-telegram-bot-api-secret-token')?.trim();
+    if (headerToken !== secretToken) {
+      return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
+    }
+  }
+
   const botToken = process.env.TELEGRAM_BOT_TOKEN?.trim();
   if (!botToken) {
     return NextResponse.json(

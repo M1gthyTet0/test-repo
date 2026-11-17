@@ -30,7 +30,11 @@ export function ProductCard({ product, largeView = false }: ProductCardProps) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={product.image_url}
-          alt={product.title}
+          alt={
+            product.description
+              ? `${product.title} — ${product.description}`
+              : product.title
+          }
           className={styles.image}
           loading="lazy"
         />
@@ -42,7 +46,9 @@ export function ProductCard({ product, largeView = false }: ProductCardProps) {
         {product.description && (
           <p className={styles.description}>{product.description}</p>
         )}
-        <p className={styles.price}>{formatPrice(product.price)}</p>
+        <p className={styles.price} aria-label={`Precio: ${formatPrice(product.price)}`}>
+          {formatPrice(product.price)}
+        </p>
       </div>
     </article>
   );

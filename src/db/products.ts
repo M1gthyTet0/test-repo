@@ -233,7 +233,9 @@ export async function markOutOfStock(identifier: string): Promise<Product | null
   return updateProductByTitleOrId(identifier, { in_stock: false });
 }
 
-export async function enforceProductCap(maxProducts = 15): Promise<number> {
+export const MAX_CATALOG_PRODUCTS = 15;
+
+export async function enforceProductCap(maxProducts = MAX_CATALOG_PRODUCTS): Promise<number> {
   const sql = getSql();
   const deleted = await sql`
     WITH ranked AS (
@@ -245,4 +247,19 @@ export async function enforceProductCap(maxProducts = 15): Promise<number> {
     RETURNING id;
   `;
   return deleted.length;
+}
+
+export async function deleteProductById(id: string): Promise<boolean> {
+  const trimmed = id.trim();
+  if (!UUID_REGEX.test(trimmed)) {
+    return false;
+  }
+
+  const sql = getSql();
+  const deleted = await sql`
+    DELETE FROM products
+    WHERE id = ${trimmed}
+    RETURNING id;
+  `;
+  return deleted.length > 0;
 }
