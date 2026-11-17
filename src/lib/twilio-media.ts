@@ -44,13 +44,9 @@ export async function downloadTwilioMedia(
   });
 
   if (!response.ok) {
-    console.error('Twilio media download failed:', {
-      status: response.status,
-      requestUrl: mediaUrl,
-      finalUrl: response.url,
-      sidPrefix: accountSid.slice(0, 6),
-    });
-    throw new Error(`Failed to download Twilio media: HTTP ${response.status}`);
+    throw new Error(
+      `Failed to download Twilio media: HTTP ${response.status} (requestUrl=${mediaUrl}, finalUrl=${response.url}, sidPrefix=${accountSid.slice(0, 6)})`
+    );
   }
 
   const arrayBuffer = await response.arrayBuffer();
