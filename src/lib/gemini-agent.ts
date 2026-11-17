@@ -112,9 +112,9 @@ function buildSystemInstruction(existingProducts: CatalogSummaryItem[]): string 
 }
 
 function getDefaultClient(): GenAIClientLike {
-  const apiKey = process.env.GEMINI_API_KEY?.trim();
+  const apiKey = process.env.GENAI_G_API_KEY?.trim();
   if (!apiKey) {
-    throw new Error('GEMINI_API_KEY is not configured.');
+    throw new Error('GENAI_G_API_KEY is not configured.');
   }
   return new GoogleGenAI({ apiKey }) as unknown as GenAIClientLike;
 }
