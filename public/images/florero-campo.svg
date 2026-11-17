@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Florero Silvestre de Mesa">
+  <rect width="800" height="600" fill="#F4EDE2"/>
+  <ellipse cx="400" cy="495" rx="160" ry="28" fill="#DED1BF"/>
+  <path d="M355 170 L355 235 C285 280 270 400 325 480 L475 480 C530 400 515 280 445 235 L445 170 Z" fill="#E3D2BE" stroke="#7A5C43" stroke-width="6"/>
+  <ellipse cx="400" cy="170" rx="45" ry="14" fill="#C9B299" stroke="#7A5C43" stroke-width="6"/>
+  <path d="M320 350 Q400 325 480 350" fill="none" stroke="#B85D3B" stroke-width="5" opacity="0.6"/>
+  <path d="M312 380 Q400 355 488 380" fill="none" stroke="#6E825E" stroke-width="5" opacity="0.6"/>
+</svg>

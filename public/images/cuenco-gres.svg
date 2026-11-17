@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Cuenco de Gres Esmaltado">
+  <rect width="800" height="600" fill="#F4EDE2"/>
+  <ellipse cx="400" cy="465" rx="220" ry="38" fill="#DED1BF"/>
+  <path d="M180 265 C185 390 275 455 400 455 C525 455 615 390 620 265 Z" fill="#D9C5A7" stroke="#8C6D4F" stroke-width="6"/>
+  <ellipse cx="400" cy="265" rx="220" ry="52" fill="#EFE4D2" stroke="#8C6D4F" stroke-width="6"/>
+  <ellipse cx="400" cy="265" rx="198" ry="40" fill="#C9A882" opacity="0.65"/>
+  <path d="M220 320 C280 355 520 355 580 320" fill="none" stroke="#B85D3B" stroke-width="6" stroke-linecap="round" opacity="0.7"/>
+</svg>

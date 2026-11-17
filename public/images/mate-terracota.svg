@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Mate de Arcilla Terracota">
+  <rect width="800" height="600" fill="#F4EDE2"/>
+  <ellipse cx="400" cy="475" rx="150" ry="30" fill="#DED1BF"/>
+  <path d="M285 230 C255 320 270 450 400 460 C530 450 545 320 515 230 Z" fill="#B85D3B" stroke="#6E3520" stroke-width="6"/>
+  <ellipse cx="400" cy="230" rx="115" ry="32" fill="#9A482B" stroke="#6E3520" stroke-width="6"/>
+  <ellipse cx="400" cy="230" rx="92" ry="22" fill="#4A2E20"/>
+  <line x1="435" y1="225" x2="545" y2="115" stroke="#C5B9A5" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="548" cy="112" r="9" fill="#B5A690"/>
+</svg>

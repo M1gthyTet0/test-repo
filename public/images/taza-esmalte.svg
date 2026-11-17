@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Taza Alta con Engobe Natural">
+  <rect width="800" height="600" fill="#F4EDE2"/>
+  <ellipse cx="385" cy="475" rx="170" ry="30" fill="#DED1BF"/>
+  <path d="M510 245 C585 245 585 375 505 375" fill="none" stroke="#8C6D4F" stroke-width="24" stroke-linecap="round"/>
+  <path d="M265 190 L280 435 C285 458 485 458 490 435 L505 190 Z" fill="#EFE4D2" stroke="#8C6D4F" stroke-width="6"/>
+  <path d="M275 350 L280 435 C285 458 485 458 490 435 L495 350 Z" fill="#C9A882" opacity="0.75"/>
+  <ellipse cx="385" cy="190" rx="120" ry="28" fill="#FAF6F0" stroke="#8C6D4F" stroke-width="6"/>
+  <ellipse cx="385" cy="190" rx="98" ry="18" fill="#B85D3B" opacity="0.45"/>
+</svg>
