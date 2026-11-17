@@ -61,8 +61,13 @@ export async function uploadImageToBlob(
   buffer: Buffer,
   mimeType: string
 ): Promise<string> {
-  if (!process.env.BLOB_READ_WRITE_TOKEN?.trim()) {
-    throw new Error('BLOB_READ_WRITE_TOKEN is not configured.');
+  const hasBlobAuth =
+    Boolean(process.env.BLOB_READ_WRITE_TOKEN?.trim()) ||
+    Boolean(process.env.BLOB_STORE_ID?.trim()) ||
+    Boolean(process.env.VERCEL_OIDC_TOKEN?.trim());
+
+  if (!hasBlobAuth) {
+    throw new Error('Vercel Blob is not configured (missing BLOB_READ_WRITE_TOKEN or BLOB_STORE_ID).');
   }
 
   const ext = getExtensionFromMime(mimeType);
