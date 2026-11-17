@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { Product } from '@/db/products';
 import styles from './AdminPanel.module.css';
@@ -40,9 +40,14 @@ export function AdminPanel({
 
   // Bot simulator state (/api/bot/test)
   const [botText, setBotText] = useState('');
+  const [botImageUrl, setBotImageUrl] = useState('');
   const [botFile, setBotFile] = useState<File | null>(null);
+  const [botPreviewUrl, setBotPreviewUrl] = useState<string | null>(null);
   const [botReply, setBotReply] = useState<string | null>(null);
   const [botBusy, setBotBusy] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   // Edit product state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -281,6 +286,73 @@ export function AdminPanel({
     }
   }
 
+  function selectBotFile(file: File | null) {
+    if (botPreviewUrl) {
+      URL.revokeObjectURL(botPreviewUrl);
+    }
+    setBotFile(file);
+    setBotPreviewUrl(file ? URL.createObjectURL(file) : null);
+  }
+
+  function handleBotPaste(e: React.ClipboardEvent) {
+    const items = Array.from(e.clipboardData?.items ?? []);
+    const imgItem = items.find((item) => item.type.startsWith('image/'));
+    if (!imgItem) return;
+    const file = imgItem.getAsFile();
+    if (file) {
+      e.preventDefault();
+      selectBotFile(file);
+      setSuccessMsg('Imagen pegada desde el portapapeles.');
+    }
+  }
+
+  async function toggleRecording() {
+    setErrorMsg(null);
+    if (recording && mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      setRecording(false);
+      return;
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      setErrorMsg('Tu navegador no soporta grabación de audio en vivo.');
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm')
+        ? 'audio/webm'
+        : MediaRecorder.isTypeSupported('audio/ogg')
+          ? 'audio/ogg'
+          : '';
+      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = (ev) => {
+        if (ev.data.size > 0) {
+          audioChunksRef.current.push(ev.data);
+        }
+      };
+
+      recorder.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const finalType = recorder.mimeType || 'audio/webm';
+        const blob = new Blob(audioChunksRef.current, { type: finalType });
+        const ext = finalType.includes('ogg') ? 'ogg' : 'webm';
+        const audioFile = new File([blob], `nota-de-voz.${ext}`, { type: finalType });
+        selectBotFile(audioFile);
+        setSuccessMsg('Audio grabado listo para enviar al bot.');
+      };
+
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setRecording(true);
+    } catch {
+      setErrorMsg('No se pudo acceder al micrófono. Verificá los permisos.');
+    }
+  }
+
   async function handleBotTest(e: React.FormEvent) {
     e.preventDefault();
     setErrorMsg(null);
@@ -290,6 +362,7 @@ export function AdminPanel({
     try {
       const formData = new FormData();
       if (botText.trim()) formData.append('text', botText.trim());
+      if (botImageUrl.trim()) formData.append('imageUrl', botImageUrl.trim());
       if (botFile) formData.append('file', botFile);
 
       const res = await fetch('/api/bot/test', {
@@ -309,7 +382,8 @@ export function AdminPanel({
         `[${data.action?.intent ?? 'OK'}] ${data.reply ?? 'Procesado.'}`
       );
       setBotText('');
-      setBotFile(null);
+      setBotImageUrl('');
+      selectBotFile(null);
       await loadProducts();
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Error probando el bot.');
@@ -438,12 +512,12 @@ export function AdminPanel({
       <section className={styles.card}>
         <h2 className={styles.sectionTitle}>Probar Bot IA (Texto, Foto o Audio)</h2>
         <p className={styles.subtitle} style={{ marginBottom: '1rem' }}>
-          Simula un mensaje de Norma directamente contra Gemini, Blob y Neon (`/api/bot/test`).
+          Pegá una imagen con <strong>Ctrl+V</strong>, pegá una URL, subí un archivo o grabá una nota de voz en vivo.
         </p>
-        <form onSubmit={handleBotTest} className={styles.formGrid}>
+        <form onSubmit={handleBotTest} onPaste={handleBotPaste} className={styles.formGrid}>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="bot-text">
-              Mensaje o descripción
+              Mensaje o descripción (podés pegar una imagen acá con Ctrl+V)
             </label>
             <input
               id="bot-text"
@@ -453,18 +527,70 @@ export function AdminPanel({
               placeholder="Ej: Agregá un cuenco verde a 16000"
             />
           </div>
+
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="bot-file">
-              Foto o nota de voz (opcional)
+            <label className={styles.label} htmlFor="bot-image-url">
+              URL de imagen (opcional, https://...)
             </label>
             <input
-              id="bot-file"
-              type="file"
-              accept="image/*,audio/*"
-              onChange={(e) => setBotFile(e.target.files?.[0] ?? null)}
-              disabled={botBusy}
+              id="bot-image-url"
+              type="url"
+              className={styles.input}
+              value={botImageUrl}
+              onChange={(e) => setBotImageUrl(e.target.value)}
+              placeholder="https://..."
+              disabled={botBusy || Boolean(botFile)}
             />
           </div>
+
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="bot-file">
+              Archivo (foto o audio) o grabación en vivo
+            </label>
+            <div className={styles.uploadRow}>
+              <input
+                id="bot-file"
+                type="file"
+                accept="image/*,audio/*"
+                onChange={(e) => selectBotFile(e.target.files?.[0] ?? null)}
+                disabled={botBusy || recording}
+              />
+              <button
+                type="button"
+                className={recording ? styles.dangerBtn : styles.secondaryBtn}
+                onClick={() => void toggleRecording()}
+                disabled={botBusy}
+              >
+                {recording ? 'Detener grabación' : 'Grabar audio'}
+              </button>
+              {botFile && (
+                <button
+                  type="button"
+                  className={styles.secondaryBtn}
+                  onClick={() => selectBotFile(null)}
+                  disabled={botBusy}
+                >
+                  Quitar adjunto
+                </button>
+              )}
+            </div>
+          </div>
+
+          {botFile && botPreviewUrl && (
+            <div>
+              {botFile.type.startsWith('image/') ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={botPreviewUrl}
+                  alt="Vista previa adjunta"
+                  className={styles.thumb}
+                />
+              ) : (
+                <audio controls src={botPreviewUrl} />
+              )}
+            </div>
+          )}
+
           {botReply && (
             <div className={styles.bannerSuccess} role="status" aria-live="polite">
               {botReply}
@@ -474,7 +600,11 @@ export function AdminPanel({
             <button
               type="submit"
               className={styles.primaryBtn}
-              disabled={botBusy || (!botText.trim() && !botFile)}
+              disabled={
+                botBusy ||
+                recording ||
+                (!botText.trim() && !botFile && !botImageUrl.trim())
+              }
             >
               {botBusy ? 'Procesando con Gemini...' : 'Enviar al Bot'}
             </button>

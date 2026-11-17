@@ -30,6 +30,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const contentType = request.headers.get('content-type') ?? '';
     let text = '';
+    let imageUrlInput = '';
     let media: { buffer: Buffer; mimeType: string } | undefined;
     let blobUrl: string | undefined;
 
@@ -37,6 +38,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const formData = await request.formData();
       const rawText = formData.get('text');
       text = typeof rawText === 'string' ? rawText.trim() : '';
+      const rawImageUrl = formData.get('imageUrl');
+      imageUrlInput = typeof rawImageUrl === 'string' ? rawImageUrl.trim() : '';
 
       const file = formData.get('file');
       if (file instanceof File && file.size > 0) {
@@ -48,8 +51,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         }
       }
     } else {
-      const body = (await request.json()) as { text?: string };
+      const body = (await request.json()) as { text?: string; imageUrl?: string };
       text = typeof body.text === 'string' ? body.text.trim() : '';
+      imageUrlInput = typeof body.imageUrl === 'string' ? body.imageUrl.trim() : '';
+    }
+
+    if (!media && imageUrlInput.startsWith('https://')) {
+      const imgRes = await fetch(imageUrlInput);
+      if (imgRes.ok) {
+        const buffer = Buffer.from(await imgRes.arrayBuffer());
+        const mimeType =
+          imgRes.headers.get('content-type')?.split(';')[0].trim() || 'image/jpeg';
+        if (mimeType.startsWith('image/')) {
+          media = { buffer, mimeType };
+          blobUrl = imageUrlInput;
+        }
+      }
     }
 
     const existingProducts = await getAllProducts();
