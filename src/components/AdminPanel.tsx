@@ -38,6 +38,12 @@ export function AdminPanel({
   const [newInStock, setNewInStock] = useState(true);
   const [uploadingNew, setUploadingNew] = useState(false);
 
+  // Bot simulator state (/api/bot/test)
+  const [botText, setBotText] = useState('');
+  const [botFile, setBotFile] = useState<File | null>(null);
+  const [botReply, setBotReply] = useState<string | null>(null);
+  const [botBusy, setBotBusy] = useState(false);
+
   // Edit product state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -275,6 +281,43 @@ export function AdminPanel({
     }
   }
 
+  async function handleBotTest(e: React.FormEvent) {
+    e.preventDefault();
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    setBotReply(null);
+    setBotBusy(true);
+    try {
+      const formData = new FormData();
+      if (botText.trim()) formData.append('text', botText.trim());
+      if (botFile) formData.append('file', botFile);
+
+      const res = await fetch('/api/bot/test', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        reply?: string;
+        action?: { intent?: string };
+        error?: string;
+      };
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || 'Error ejecutando el bot.');
+      }
+      setBotReply(
+        `[${data.action?.intent ?? 'OK'}] ${data.reply ?? 'Procesado.'}`
+      );
+      setBotText('');
+      setBotFile(null);
+      await loadProducts();
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : 'Error probando el bot.');
+    } finally {
+      setBotBusy(false);
+    }
+  }
+
   async function handleCopyId(id: string) {
     try {
       await navigator.clipboard.writeText(id);
@@ -391,6 +434,53 @@ export function AdminPanel({
           {successMsg}
         </div>
       )}
+
+      <section className={styles.card}>
+        <h2 className={styles.sectionTitle}>Probar Bot IA (Texto, Foto o Audio)</h2>
+        <p className={styles.subtitle} style={{ marginBottom: '1rem' }}>
+          Simula un mensaje de Norma directamente contra Gemini, Blob y Neon (`/api/bot/test`).
+        </p>
+        <form onSubmit={handleBotTest} className={styles.formGrid}>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="bot-text">
+              Mensaje o descripción
+            </label>
+            <input
+              id="bot-text"
+              className={styles.input}
+              value={botText}
+              onChange={(e) => setBotText(e.target.value)}
+              placeholder="Ej: Agregá un cuenco verde a 16000"
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="bot-file">
+              Foto o nota de voz (opcional)
+            </label>
+            <input
+              id="bot-file"
+              type="file"
+              accept="image/*,audio/*"
+              onChange={(e) => setBotFile(e.target.files?.[0] ?? null)}
+              disabled={botBusy}
+            />
+          </div>
+          {botReply && (
+            <div className={styles.bannerSuccess} role="status" aria-live="polite">
+              {botReply}
+            </div>
+          )}
+          <div>
+            <button
+              type="submit"
+              className={styles.primaryBtn}
+              disabled={botBusy || (!botText.trim() && !botFile)}
+            >
+              {botBusy ? 'Procesando con Gemini...' : 'Enviar al Bot'}
+            </button>
+          </div>
+        </form>
+      </section>
 
       <section className={styles.card}>
         <h2 className={styles.sectionTitle}>Agregar nueva pieza</h2>
