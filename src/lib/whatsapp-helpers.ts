@@ -10,7 +10,10 @@ function escapeXml(value: string): string {
 }
 
 export function buildTwimlResponse(message: string, status = 200): NextResponse {
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<Response><Message>${escapeXml(message)}</Message></Response>`;
+  const disableReply = process.env.DISABLE_WHATSAPP_REPLY?.trim().toLowerCase() === 'true';
+  const xml = disableReply
+    ? '<?xml version="1.0" encoding="UTF-8"?>\n<Response></Response>'
+    : `<?xml version="1.0" encoding="UTF-8"?>\n<Response><Message>${escapeXml(message)}</Message></Response>`;
   return new NextResponse(xml, {
     status,
     headers: {
