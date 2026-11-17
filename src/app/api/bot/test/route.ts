@@ -5,6 +5,8 @@ import { applyAgentAction } from '@/lib/catalog-actions';
 import { analyzeNormaMessage } from '@/lib/gemini-agent';
 import { uploadImageToBlob } from '@/lib/twilio-media';
 
+export const maxDuration = 60;
+
 function isAuthorized(request: NextRequest): boolean {
   if (isAdminAuthenticated(request)) return true;
   const authHeader = request.headers.get('authorization')?.trim() ?? '';
@@ -106,6 +108,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       imageUrl: blobUrl ?? null,
     });
   } catch (error) {
+    console.error('Bot test error:', error);
     return NextResponse.json(
       { ok: false, error: error instanceof Error ? error.message : 'Test endpoint error' },
       { status: 500 }

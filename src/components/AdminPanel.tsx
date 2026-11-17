@@ -380,14 +380,20 @@ export function AdminPanel({
         method: 'POST',
         body: formData,
       });
-      const data = (await res.json()) as {
+      const raw = await res.text();
+      let data: {
         ok?: boolean;
         reply?: string;
         action?: { intent?: string };
         error?: string;
-      };
+      } = {};
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        throw new Error(`Error del servidor (HTTP ${res.status}).`);
+      }
       if (!res.ok || !data.ok) {
-        throw new Error(data.error || 'Error ejecutando el bot.');
+        throw new Error(data.error || `Error ejecutando el bot (HTTP ${res.status}).`);
       }
       setBotReply(
         `[${data.action?.intent ?? 'OK'}] ${data.reply ?? 'Procesado.'}`
