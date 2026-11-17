@@ -41,8 +41,10 @@ export function AdminPanel({
   // Bot simulator state (/api/bot/test)
   const [botText, setBotText] = useState('');
   const [botImageUrl, setBotImageUrl] = useState('');
-  const [botFile, setBotFile] = useState<File | null>(null);
-  const [botPreviewUrl, setBotPreviewUrl] = useState<string | null>(null);
+  const [botImageFile, setBotImageFile] = useState<File | null>(null);
+  const [botImagePreviewUrl, setBotImagePreviewUrl] = useState<string | null>(null);
+  const [botAudioFile, setBotAudioFile] = useState<File | null>(null);
+  const [botAudioPreviewUrl, setBotAudioPreviewUrl] = useState<string | null>(null);
   const [botReply, setBotReply] = useState<string | null>(null);
   const [botBusy, setBotBusy] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -286,12 +288,20 @@ export function AdminPanel({
     }
   }
 
-  function selectBotFile(file: File | null) {
-    if (botPreviewUrl) {
-      URL.revokeObjectURL(botPreviewUrl);
+  function selectBotImage(file: File | null) {
+    if (botImagePreviewUrl) {
+      URL.revokeObjectURL(botImagePreviewUrl);
     }
-    setBotFile(file);
-    setBotPreviewUrl(file ? URL.createObjectURL(file) : null);
+    setBotImageFile(file);
+    setBotImagePreviewUrl(file ? URL.createObjectURL(file) : null);
+  }
+
+  function selectBotAudio(file: File | null) {
+    if (botAudioPreviewUrl) {
+      URL.revokeObjectURL(botAudioPreviewUrl);
+    }
+    setBotAudioFile(file);
+    setBotAudioPreviewUrl(file ? URL.createObjectURL(file) : null);
   }
 
   function handleBotPaste(e: React.ClipboardEvent) {
@@ -301,7 +311,7 @@ export function AdminPanel({
     const file = imgItem.getAsFile();
     if (file) {
       e.preventDefault();
-      selectBotFile(file);
+      selectBotImage(file);
       setSuccessMsg('Imagen pegada desde el portapapeles.');
     }
   }
@@ -341,7 +351,7 @@ export function AdminPanel({
         const blob = new Blob(audioChunksRef.current, { type: finalType });
         const ext = finalType.includes('ogg') ? 'ogg' : 'webm';
         const audioFile = new File([blob], `nota-de-voz.${ext}`, { type: finalType });
-        selectBotFile(audioFile);
+        selectBotAudio(audioFile);
         setSuccessMsg('Audio grabado listo para enviar al bot.');
       };
 
@@ -363,7 +373,8 @@ export function AdminPanel({
       const formData = new FormData();
       if (botText.trim()) formData.append('text', botText.trim());
       if (botImageUrl.trim()) formData.append('imageUrl', botImageUrl.trim());
-      if (botFile) formData.append('file', botFile);
+      if (botImageFile) formData.append('image', botImageFile);
+      if (botAudioFile) formData.append('audio', botAudioFile);
 
       const res = await fetch('/api/bot/test', {
         method: 'POST',
@@ -383,7 +394,8 @@ export function AdminPanel({
       );
       setBotText('');
       setBotImageUrl('');
-      selectBotFile(null);
+      selectBotImage(null);
+      selectBotAudio(null);
       await loadProducts();
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Error probando el bot.');
@@ -539,22 +551,51 @@ export function AdminPanel({
               value={botImageUrl}
               onChange={(e) => setBotImageUrl(e.target.value)}
               placeholder="https://..."
-              disabled={botBusy || Boolean(botFile)}
+              disabled={botBusy || Boolean(botImageFile)}
             />
           </div>
 
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="bot-file">
-              Archivo (foto o audio) o grabación en vivo
+            <label className={styles.label} htmlFor="bot-image-file">
+              Foto (archivo o Ctrl+V)
             </label>
             <div className={styles.uploadRow}>
               <input
-                id="bot-file"
+                id="bot-image-file"
                 type="file"
-                accept="image/*,audio/*"
-                onChange={(e) => selectBotFile(e.target.files?.[0] ?? null)}
-                disabled={botBusy || recording}
+                accept="image/*"
+                onChange={(e) => selectBotImage(e.target.files?.[0] ?? null)}
+                disabled={botBusy}
               />
+              {botImageFile && (
+                <button
+                  type="button"
+                  className={styles.secondaryBtn}
+                  onClick={() => selectBotImage(null)}
+                  disabled={botBusy}
+                >
+                  Quitar foto
+                </button>
+              )}
+            </div>
+          </div>
+
+          {botImageFile && botImagePreviewUrl && (
+            <div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={botImagePreviewUrl}
+                alt="Vista previa de foto adjunta"
+                className={styles.thumb}
+              />
+            </div>
+          )}
+
+          <div className={styles.field}>
+            <label className={styles.label} htmlFor="bot-audio-file">
+              Nota de voz (grabar en vivo o subir audio)
+            </label>
+            <div className={styles.uploadRow}>
               <button
                 type="button"
                 className={recording ? styles.dangerBtn : styles.secondaryBtn}
@@ -563,31 +604,29 @@ export function AdminPanel({
               >
                 {recording ? 'Detener grabación' : 'Grabar audio'}
               </button>
-              {botFile && (
+              <input
+                id="bot-audio-file"
+                type="file"
+                accept="audio/*"
+                onChange={(e) => selectBotAudio(e.target.files?.[0] ?? null)}
+                disabled={botBusy || recording}
+              />
+              {botAudioFile && (
                 <button
                   type="button"
                   className={styles.secondaryBtn}
-                  onClick={() => selectBotFile(null)}
+                  onClick={() => selectBotAudio(null)}
                   disabled={botBusy}
                 >
-                  Quitar adjunto
+                  Quitar audio
                 </button>
               )}
             </div>
           </div>
 
-          {botFile && botPreviewUrl && (
+          {botAudioFile && botAudioPreviewUrl && (
             <div>
-              {botFile.type.startsWith('image/') ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={botPreviewUrl}
-                  alt="Vista previa adjunta"
-                  className={styles.thumb}
-                />
-              ) : (
-                <audio controls src={botPreviewUrl} />
-              )}
+              <audio controls src={botAudioPreviewUrl} />
             </div>
           )}
 
@@ -603,7 +642,7 @@ export function AdminPanel({
               disabled={
                 botBusy ||
                 recording ||
-                (!botText.trim() && !botFile && !botImageUrl.trim())
+                (!botText.trim() && !botImageFile && !botAudioFile && !botImageUrl.trim())
               }
             >
               {botBusy ? 'Procesando con Gemini...' : 'Enviar al Bot'}

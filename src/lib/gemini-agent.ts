@@ -29,6 +29,10 @@ export interface AnalyzeMessageInput {
     buffer: Buffer;
     mimeType: string;
   };
+  extraMedia?: Array<{
+    buffer: Buffer;
+    mimeType: string;
+  }>;
   existingProducts: CatalogSummaryItem[];
 }
 
@@ -182,6 +186,15 @@ export async function analyzeNormaMessage(
       inlineData: {
         data: input.media.buffer.toString('base64'),
         mimeType: input.media.mimeType,
+      },
+    });
+  }
+
+  for (const extra of input.extraMedia ?? []) {
+    parts.push({
+      inlineData: {
+        data: extra.buffer.toString('base64'),
+        mimeType: extra.mimeType,
       },
     });
   }

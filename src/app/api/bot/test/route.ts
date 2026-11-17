@@ -32,6 +32,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     let text = '';
     let imageUrlInput = '';
     let media: { buffer: Buffer; mimeType: string } | undefined;
+    const extraMedia: Array<{ buffer: Buffer; mimeType: string }> = [];
     let blobUrl: string | undefined;
 
     if (contentType.includes('multipart/form-data')) {
@@ -41,13 +42,24 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const rawImageUrl = formData.get('imageUrl');
       imageUrlInput = typeof rawImageUrl === 'string' ? rawImageUrl.trim() : '';
 
-      const file = formData.get('file');
-      if (file instanceof File && file.size > 0) {
-        const buffer = Buffer.from(await file.arrayBuffer());
-        const mimeType = file.type || 'application/octet-stream';
+      const imageField = formData.get('image') ?? formData.get('file');
+      if (imageField instanceof File && imageField.size > 0) {
+        const buffer = Buffer.from(await imageField.arrayBuffer());
+        const mimeType = imageField.type || 'application/octet-stream';
         media = { buffer, mimeType };
         if (mimeType.startsWith('image/')) {
           blobUrl = await uploadImageToBlob(buffer, mimeType);
+        }
+      }
+
+      const audioField = formData.get('audio');
+      if (audioField instanceof File && audioField.size > 0) {
+        const buffer = Buffer.from(await audioField.arrayBuffer());
+        const mimeType = audioField.type || 'audio/webm';
+        if (!media) {
+          media = { buffer, mimeType };
+        } else {
+          extraMedia.push({ buffer, mimeType });
         }
       }
     } else {
@@ -56,14 +68,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       imageUrlInput = typeof body.imageUrl === 'string' ? body.imageUrl.trim() : '';
     }
 
-    if (!media && imageUrlInput.startsWith('https://')) {
+    if (!blobUrl && imageUrlInput.startsWith('https://')) {
       const imgRes = await fetch(imageUrlInput);
       if (imgRes.ok) {
         const buffer = Buffer.from(await imgRes.arrayBuffer());
         const mimeType =
           imgRes.headers.get('content-type')?.split(';')[0].trim() || 'image/jpeg';
         if (mimeType.startsWith('image/')) {
-          media = { buffer, mimeType };
+          if (!media) {
+            media = { buffer, mimeType };
+          } else {
+            extraMedia.push({ buffer, mimeType });
+          }
           blobUrl = imageUrlInput;
         }
       }
@@ -73,6 +89,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const action = await analyzeNormaMessage({
       text,
       media,
+      extraMedia: extraMedia.length > 0 ? extraMedia : undefined,
       existingProducts: existingProducts.map((p) => ({
         id: p.id,
         title: p.title,
