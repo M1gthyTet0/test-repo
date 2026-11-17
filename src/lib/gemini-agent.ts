@@ -198,17 +198,42 @@ export async function analyzeNormaMessage(
     };
   }
 
-  const model = process.env.GEMINI_MODEL?.trim() || 'gemini-3.8-flash';
-  const response = await ai.models.generateContent({
-    model,
-    contents: [{ role: 'user', parts }],
-    config: {
-      systemInstruction: buildSystemInstruction(input.existingProducts),
-      responseMimeType: 'application/json',
-      responseSchema: AGENT_RESPONSE_SCHEMA,
-      temperature: 0.2,
-    },
-  });
+  const primaryModel = process.env.GEMINI_MODEL?.trim() || 'gemini-3.8-flash';
+  const candidateModels = Array.from(
+    new Set([primaryModel, 'gemini-3.7-flash', 'gemini-3.5-flash-lite'])
+  );
+
+  let response: { text?: string } | undefined;
+  let lastError: unknown;
+
+  for (const model of candidateModels) {
+    try {
+      response = await ai.models.generateContent({
+        model,
+        contents: [{ role: 'user', parts }],
+        config: {
+          systemInstruction: buildSystemInstruction(input.existingProducts),
+          responseMimeType: 'application/json',
+          responseSchema: AGENT_RESPONSE_SCHEMA,
+          temperature: 0.2,
+        },
+      });
+      break;
+    } catch (err) {
+      lastError = err;
+      const status = (err as { status?: number })?.status;
+      const msg = err instanceof Error ? err.message : String(err);
+      const isTransient = status === 503 || status === 429 || msg.includes('503') || msg.includes('UNAVAILABLE');
+      if (!isTransient) {
+        throw err;
+      }
+      console.warn(`Gemini model ${model} unavailable (${status ?? 'transient'}), trying fallback...`);
+    }
+  }
+
+  if (!response) {
+    throw lastError;
+  }
 
   return parseAgentAction(response.text);
 }
