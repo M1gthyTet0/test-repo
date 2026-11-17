@@ -198,8 +198,9 @@ export async function analyzeNormaMessage(
     };
   }
 
+  const model = process.env.GEMINI_MODEL?.trim() || 'gemini-3.8-flash';
   const response = await ai.models.generateContent({
-    model: 'gemini-3.8-flash',
+    model,
     contents: [{ role: 'user', parts }],
     config: {
       systemInstruction: buildSystemInstruction(input.existingProducts),
