@@ -75,6 +75,34 @@
   border-color: var(--accent-terracotta-dark);
 }
 
+.toolbarActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.whatsappCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0.7rem 1.35rem;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--accent-terracotta);
+  background-color: var(--accent-terracotta);
+  color: #ffffff;
+  font-size: 0.98rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.whatsappCta:hover {
+  background-color: var(--accent-terracotta-dark);
+  border-color: var(--accent-terracotta-dark);
+}
+
 .grid {
   display: grid;
   grid-template-columns: 1fr;

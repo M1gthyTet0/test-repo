@@ -15,6 +15,13 @@ export function formatPrice(price: number): string {
 
 export function ProductCard({ product, largeView = false }: ProductCardProps) {
   const isSold = !product.in_stock;
+  const rawPhone = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.trim() || '+5491112345678';
+  const whatsappDigits = rawPhone.replace(/\D/g, '');
+  const imagePart = product.image_url.startsWith('https://')
+    ? ` ${product.image_url}`
+    : '';
+  const inquiryText = `Hola Norma, vi "${product.title}" a ${formatPrice(product.price)} y quería saber si está disponible.${imagePart}`;
+  const inquiryHref = `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(inquiryText)}`;
 
   return (
     <article
@@ -49,6 +56,17 @@ export function ProductCard({ product, largeView = false }: ProductCardProps) {
         <p className={styles.price} aria-label={`Precio: ${formatPrice(product.price)}`}>
           {formatPrice(product.price)}
         </p>
+        {!isSold && (
+          <a
+            href={inquiryHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.inquiryLink}
+            aria-label={`Consultar por ${product.title} por WhatsApp`}
+          >
+            Consultar por WhatsApp
+          </a>
+        )}
       </div>
     </article>
   );

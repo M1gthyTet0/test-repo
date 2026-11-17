@@ -75,6 +75,30 @@
   color: var(--accent-terracotta-dark);
 }
 
+.inquiryLink {
+  align-self: flex-start;
+  margin-top: 0.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--border-warm);
+  background-color: var(--bg-soft);
+  color: var(--text-charcoal);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.inquiryLink:hover {
+  background-color: var(--accent-terracotta);
+  border-color: var(--accent-terracotta);
+  color: #ffffff;
+}
+
 /* Vista Grande (1 columna de lectura fácil) */
 .cardLarge {
   display: grid;

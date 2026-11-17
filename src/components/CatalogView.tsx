@@ -11,6 +11,11 @@ interface CatalogViewProps {
 
 export function CatalogView({ products }: CatalogViewProps) {
   const [largeView, setLargeView] = useState(false);
+  const rawPhone = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.trim() || '+5491112345678';
+  const whatsappDigits = rawPhone.replace(/\D/g, '');
+  const whatsappHref = `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(
+    'Hola Norma, vi tu catálogo de cerámica y te quería consultar por una pieza.'
+  )}`;
 
   return (
     <main className="page-shell">
@@ -32,14 +37,25 @@ export function CatalogView({ products }: CatalogViewProps) {
             ? '1 pieza en el taller'
             : `${products.length} piezas en el taller`}
         </p>
-        <button
-          type="button"
-          className={styles.toggleButton}
-          onClick={() => setLargeView((prev) => !prev)}
-          aria-pressed={largeView}
-        >
-          {largeView ? 'Ver en Cuadrícula' : 'Ver en Tamaño Grande'}
-        </button>
+        <div className={styles.toolbarActions}>
+          <a
+            href={whatsappHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.whatsappCta}
+            aria-label="Llamar o escribir a Norma por WhatsApp"
+          >
+            WhatsApp de Norma
+          </a>
+          <button
+            type="button"
+            className={styles.toggleButton}
+            onClick={() => setLargeView((prev) => !prev)}
+            aria-pressed={largeView}
+          >
+            {largeView ? 'Ver en Cuadrícula' : 'Ver en Tamaño Grande'}
+          </button>
+        </div>
       </div>
 
       {products.length === 0 ? (
